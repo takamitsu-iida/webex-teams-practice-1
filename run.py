@@ -74,11 +74,14 @@ assert find_executable("ngrok"), "ngrok command must be installed, see https://n
 
 # Opening Ngrok in background
 # os.popen("ngrok http 5000 -log=stdout > /dev/null &")
-subprocess.call("ngrok http 5000 -log=stdout > /dev/null &", shell=True)
-# subprocess.Popen(["ngrok", "http", "5000", "-log=stdout"], stdout=subprocess.DEVNULL)
-
+# subprocess.call("ngrok http 5000 -log=stdout > /dev/null &", shell=True)
+ngrok = subprocess.Popen(["ngrok", "http", "5000", "-log=stdout"], stdout=subprocess.DEVNULL)
 
 time.sleep(5)  #Leaving some time to Ngrok to open
+
+assert ngrok.poll() is None, "ngrok terminated abrutly"
+# ngrok.terminate()
+
 
 try:
   # term_output_json = os.popen('curl http://127.0.0.1:4040/api/tunnels').read()  # Getting public URL on which NGROK is listening to
