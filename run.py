@@ -3,12 +3,16 @@
 
 from __future__ import print_function  # Needed if you want to have console output using Flask
 
-import json
 import sys
 import os
+import subprocess
 import time
 
+from distutils.spawn import find_executable
+
 import requests
+requests.packages.urllib3.disable_warnings()  #removing SSL warnings
+
 from flask import Flask, request
 
 try:
@@ -64,19 +68,29 @@ def webhook():
     return "It's my own messages ... ignoring it"
 
 
-os.popen("pkill ngrok")  # clearing previous sessions of ngrok (if any)
+assert find_executable("ngrok"), "ngrok command must be installed, see https://ngrok.com/"
 
-# os.popen("ngrok http 5000 &")  # Opening Ngrok in background
-os.popen("ngrok http 5000 > /dev/null &")
+# os.popen("pkill ngrok")  # clearing previous sessions of ngrok (if any)
+
+# Opening Ngrok in background
+# os.popen("ngrok http 5000 -log=stdout > /dev/null &")
+subprocess.call("ngrok http 5000 -log=stdout > /dev/null &", shell=True)
+# subprocess.Popen(["ngrok", "http", "5000", "-log=stdout"], stdout=subprocess.DEVNULL)
+
 
 time.sleep(5)  #Leaving some time to Ngrok to open
 
-term_output_json = os.popen('curl http://127.0.0.1:4040/api/tunnels').read()  # Getting public URL on which NGROK is listening to
-tunnel_info = json.loads(term_output_json)
-public_url = tunnel_info['tunnels'][0]['public_url']
+try:
+  # term_output_json = os.popen('curl http://127.0.0.1:4040/api/tunnels').read()  # Getting public URL on which NGROK is listening to
+  # tunnel_info = json.loads(term_output_json)
+  tunnel_info = requests.get("http://127.0.0.1:4040/api/tunnels").json()
+  public_url = tunnel_info['tunnels'][0]['public_url']
+except Exception as e:
+  print(e)
+  sys.exit(-1)
+
 
 # Registering Webhook
-requests.packages.urllib3.disable_warnings()  #removing SSL warnings
 post_message_url = "https://api.ciscospark.com/v1/webhooks"
 
 # Preparing the payload to register. We are only interested in messages here, but feel free to change it
@@ -94,4 +108,4 @@ if api_response.status_code != 200:
   exit(0)
 
 if __name__ == '__main__':
-  app.run(host='localhost', use_reloader=True, debug=True)
+  app.run(host='127.0.0.1', port=5000, use_reloader=True, debug=True)
