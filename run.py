@@ -11,13 +11,16 @@ import time
 import requests
 from flask import Flask, request
 
-token = 'Enter your bot access_token here !'
-with open('~/.bot_1', mode='r') as f:
-  TOKEN = f.read().strip()
+try:
+  with open(os.path.expanduser('~/.bot_1'), mode='r') as f:
+    TOKEN = f.read().strip()
+except IOError:
+  sys.exit(-1)
 
 def get_header():
   return {
-    'Authorization': "Bearer {}".format(TOKEN)
+    'Authorization': "Bearer {}".format(TOKEN),
+    'content-type': "application/json"
   }
 
 app = Flask(__name__)
@@ -63,7 +66,8 @@ def webhook():
 
 os.popen("pkill ngrok")  # clearing previous sessions of ngrok (if any)
 
-os.popen("ngrok http 5000 &")  # Opening Ngrok in background
+# os.popen("ngrok http 5000 &")  # Opening Ngrok in background
+os.popen("ngrok http 5000 > /dev/null &")
 
 time.sleep(5)  #Leaving some time to Ngrok to open
 
@@ -72,14 +76,18 @@ tunnel_info = json.loads(term_output_json)
 public_url = tunnel_info['tunnels'][0]['public_url']
 
 # Registering Webhook
-header = {"Authorization": "Bearer %s" % token, "content-type": "application/json"}
 requests.packages.urllib3.disable_warnings()  #removing SSL warnings
 post_message_url = "https://api.ciscospark.com/v1/webhooks"
 
 # Preparing the payload to register. We are only interested in messages here, but feel free to change it
-payload = {"resource": "messages", "event": "all", "targetUrl": public_url, "name": "MyWonderfulWebHook"}
+payload = {
+  "resource": "messages",
+  "event": "all",
+  "targetUrl": public_url,
+  "name": "MyWonderfulWebHook"
+}
 
-api_response = requests.post(post_message_url, json=payload, headers=header, verify=False)  #Registering webhook
+api_response = requests.post(post_message_url, json=payload, headers=get_header(), verify=False)  #Registering webhook
 
 if api_response.status_code != 200:
   print('Webhook registration Error !')
