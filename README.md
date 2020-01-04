@@ -271,4 +271,6 @@ Pythonでのwebhookの例
 
 <https://community.cisco.com/t5/collaboration-documents/a-simple-webex-teams-webhook-in-python/ta-p/3691304>
 
-<https://community.cisco.com/t5/collaboration-documents/a-simple-webex-teams-webhook-in-python/ta-p/3691304>
+<https://github.com/Paul-weqe/python_webex_bot>
+
+<https://github.com/CiscoDevNet/webexteamssdk>
